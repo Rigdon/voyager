@@ -17,6 +17,7 @@ type Options struct {
 	QPS                         float32
 	Burst                       int
 	ResyncPeriod                time.Duration
+	MaxNumRequeues              int
 	HAProxyImage                string
 	ExporterSidecarImage        string
 	AnalyticsClientID           string
