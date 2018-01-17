@@ -1,44 +1,24 @@
-package config
+package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/appscode/go/log"
 	"github.com/appscode/voyager/pkg/certificate/providers"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func RenderConfig(data TemplateData) (string, error) {
-	if err := data.isValid(); err != nil {
-		return "", err
-	}
-	data.convertWildcardHostToEmpty()
-	data.canonicalize()
-	data.moveAcmePathToTop()
-
-	var buf bytes.Buffer
-	err := haproxyTemplate.ExecuteTemplate(&buf, "haproxy.cfg", data)
-	if err != nil {
-		log.Error(err)
-		return "", err
-	}
-	lines := strings.Split(buf.String(), "\n")
-	result := make([]string, 0, len(lines))
-	for _, line := range lines {
-		if strings.TrimSpace(line) != "" {
-			result = append(result, line)
-		}
-	}
-	return strings.Join(result, "\n"), nil
-}
-
 func (td TemplateData) String() string {
 	data, _ := json.MarshalIndent(td, "", " ")
 	return string(data)
+}
+
+func (td *TemplateData) Canonicalize() {
+	td.convertWildcardHostToEmpty()
+	td.sort()
+	td.moveAcmePathToTop()
 }
 
 func (td *TemplateData) convertWildcardHostToEmpty() {
@@ -53,7 +33,7 @@ func (td *TemplateData) convertWildcardHostToEmpty() {
 	}
 }
 
-func (td *TemplateData) canonicalize() {
+func (td *TemplateData) sort() {
 	if td.DefaultBackend != nil {
 		td.DefaultBackend.canonicalize()
 	}
@@ -156,7 +136,7 @@ func (td *TemplateData) moveAcmePathToTop() {
 	}
 }
 
-func (td *TemplateData) isValid() error {
+func (td *TemplateData) IsValid() error {
 	frontends := sets.NewString()
 	backends := sets.NewString()
 

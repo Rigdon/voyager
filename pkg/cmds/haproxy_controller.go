@@ -19,8 +19,8 @@ var (
 		IngressRef: core.ObjectReference{
 			Namespace: meta.Namespace(),
 		},
-		MountPath: "/etc/ssl/private/haproxy",
-		CmdFile:   "",
+		CertDir: "/etc/ssl/private/haproxy",
+		CmdFile: "",
 		// ref: https://github.com/kubernetes/ingress-nginx/blob/e4d53786e771cc6bdd55f180674b79f5b692e552/pkg/ingress/controller/launch.go#L252-L259
 		// High enough QPS to fit all expected use cases. QPS=0 is not set here, because client code is overriding it.
 		QPS: 1e6,
@@ -48,7 +48,7 @@ func NewCmdHAProxyController() *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.IngressRef.APIVersion, "ingress-api-version", opts.IngressRef.APIVersion, "API version of ingress resource")
 	cmd.Flags().StringVar(&opts.IngressRef.Name, "ingress-name", opts.IngressRef.Name, "Name of ingress resource")
-	cmd.Flags().StringVar(&opts.MountPath, "mount", opts.MountPath, "Path where tls certificates are stored for HAProxy")
+	cmd.Flags().StringVar(&opts.CertDir, "mount", opts.CertDir, "Path where tls certificates are stored for HAProxy")
 	cmd.Flags().StringVarP(&opts.CmdFile, "boot-cmd", "b", opts.CmdFile, "Bash script that will be run on every change of the file")
 	cmd.Flags().DurationVar(&opts.ResyncPeriod, "resync-period", opts.ResyncPeriod, "If non-zero, will re-list this often. Otherwise, re-list will be delayed aslong as possible (until the upstream source closes the watch or times out.")
 	cmd.Flags().StringVarP(&opts.CloudProvider, "cloud-provider", "c", opts.CloudProvider, "Name of cloud provider")

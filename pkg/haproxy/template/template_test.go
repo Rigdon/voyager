@@ -1,4 +1,4 @@
-package config
+package template
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/appscode/go/runtime"
 	api "github.com/appscode/voyager/apis/voyager/v1beta1"
+	hpi "github.com/appscode/voyager/pkg/haproxy/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,23 +47,23 @@ hdr_end(host) -i .appscode.com
 }
 
 func TestTemplate(t *testing.T) {
-	si := &SharedInfo{
-		DefaultBackend: &Backend{
+	si := &hpi.SharedInfo{
+		DefaultBackend: &hpi.Backend{
 			Name:         "default",
 			BackendRules: []string{"first rule", "second rule"},
 			RewriteRules: []string{"first rule", "second rule"},
 			HeaderRules:  []string{"firstName value", "secondName value"},
-			Endpoints: []*Endpoint{
+			Endpoints: []*hpi.Endpoint{
 				{Name: "first", IP: "10.244.2.1", Port: "2323"},
 				{Name: "first", IP: "10.244.2.2", Port: "2324"},
 			},
 		},
 		MaxConnections: 3000,
-		Limit:          &Limit{Rate: 5, TimeSecond: 20},
+		Limit:          &hpi.Limit{Rate: 5, TimeSecond: 20},
 	}
-	testParsedConfig := TemplateData{
+	testParsedConfig := hpi.TemplateData{
 		SharedInfo: si,
-		ErrorFiles: []*ErrorFile{
+		ErrorFiles: []*hpi.ErrorFile{
 			{
 				StatusCode: "403",
 				Command:    "errorfile",
@@ -84,29 +85,29 @@ func TestTemplate(t *testing.T) {
 			"with-no":        false,
 			"with-no-two":    false,
 		},
-		Stats: &StatsInfo{Port: 1234},
+		Stats: &hpi.StatsInfo{Port: 1234},
 		DNSResolvers: []*api.DNSResolver{
 			{Name: "first", NameServer: []string{"foo:54", "bar:53"}, Retries: 5, Timeout: map[string]string{"client": "5s", "fin": "1d"}, Hold: map[string]string{"client": "5s", "fin": "1d"}},
 			{Name: "second", NameServer: []string{"foo:54", "bar:53"}, Retries: 5, CheckHealth: true, Hold: map[string]string{"client": "5s", "fin": "1d"}},
 			{Name: "third", NameServer: []string{"foo:54", "bar:53"}, Retries: 5, CheckHealth: true},
 		},
-		HTTPService: []*HTTPService{
+		HTTPService: []*hpi.HTTPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "one",
 				Port:          80,
 				FrontendRules: []string{},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:         "elijah",
 									BackendRules: []string{"first rule", "second rule"},
 									RewriteRules: []string{"first rule", "second rule"},
 									HeaderRules:  []string{"firstName value", "secondName value"},
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -114,9 +115,9 @@ func TestTemplate(t *testing.T) {
 							},
 							{
 								Path: "/nicklause",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "nicklause",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324", CheckHealth: true},
 									},
@@ -126,13 +127,13 @@ func TestTemplate(t *testing.T) {
 					},
 					{
 						Host: "http.appscode.test",
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/rebeka",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:         "rebecka",
 									RewriteRules: []string{"first rule", "second rule"},
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324", ExternalName: "name", DNSResolver: "one", UseDNSResolver: true, CheckHealth: true, TLSOption: "ssl verify required"},
 									},
@@ -148,18 +149,18 @@ func TestTemplate(t *testing.T) {
 				Port:          933,
 				FrontendRules: []string{},
 				OffloadSSL:    true,
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/kool",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:         "kool",
 									Sticky:       true,
 									BackendRules: []string{"first rule", "second rule"},
 									RewriteRules: []string{"first rule", "second rule"},
 									HeaderRules:  []string{"firstName value", "secondName value"},
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -175,18 +176,18 @@ func TestTemplate(t *testing.T) {
 				Port:          9334,
 				FrontendRules: []string{},
 				OffloadSSL:    true,
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/kool",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:         "kool",
 									Sticky:       true,
 									BackendRules: []string{"first rule", "second rule"},
 									RewriteRules: []string{"first rule", "second rule"},
 									HeaderRules:  []string{"firstName value", "secondName value"},
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true, TLSOption: "ssl verify required"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324", TLSOption: "ssl verify none"},
 									},
@@ -203,16 +204,16 @@ func TestTemplate(t *testing.T) {
 				NodePort:      32000,
 				FrontendRules: []string{},
 				OffloadSSL:    true,
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
 						Host: "ex.appscode.test",
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/yara",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:   "yara",
 									Sticky: true,
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true, TLSOption: "ssl verify required"},
 									},
 								},
@@ -227,16 +228,16 @@ func TestTemplate(t *testing.T) {
 				Port:          80,
 				FrontendRules: []string{},
 				OffloadSSL:    true,
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
 						Host: "ex.appscode.test",
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/yara",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name:   "yara",
 									Sticky: true,
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true, TLSOption: "ssl verify required"},
 									},
 								},
@@ -250,15 +251,15 @@ func TestTemplate(t *testing.T) {
 				FrontendName:  "http-with-frontend-rule",
 				Port:          80,
 				FrontendRules: []string{"rule one", "rule two"},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
 						Host: "ex.appscode.test",
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/yara",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "yara",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 									},
 								},
@@ -268,32 +269,32 @@ func TestTemplate(t *testing.T) {
 				},
 			},
 			{
-				SharedInfo:   &SharedInfo{EnableHSTS: false},
+				SharedInfo:   &hpi.SharedInfo{EnableHSTS: false},
 				FrontendName: "with-hsts-disabled",
 				OffloadSSL:   true,
 			},
 			{
-				SharedInfo:   &SharedInfo{EnableHSTS: true, HSTSMaxAge: 100},
+				SharedInfo:   &hpi.SharedInfo{EnableHSTS: true, HSTSMaxAge: 100},
 				FrontendName: "with-max-age",
 				OffloadSSL:   true,
 			},
 			{
-				SharedInfo:   &SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSIncludeSubDomains: true},
+				SharedInfo:   &hpi.SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSIncludeSubDomains: true},
 				FrontendName: "with-subdomains",
 				OffloadSSL:   true,
 			},
 			{
-				SharedInfo:   &SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSPreload: true},
+				SharedInfo:   &hpi.SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSPreload: true},
 				FrontendName: "with-preload",
 				OffloadSSL:   true,
 			},
 			{
-				SharedInfo:   &SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSIncludeSubDomains: true, HSTSPreload: true},
+				SharedInfo:   &hpi.SharedInfo{EnableHSTS: true, HSTSMaxAge: 100, HSTSIncludeSubDomains: true, HSTSPreload: true},
 				FrontendName: "with-subdomains-preload",
 				OffloadSSL:   true,
 			},
 			{
-				SharedInfo:   &SharedInfo{WhitelistSourceRange: "192.168.100.1 192.168.99.100"},
+				SharedInfo:   &hpi.SharedInfo{WhitelistSourceRange: "192.168.100.1 192.168.99.100"},
 				FrontendName: "with-whitelist-http",
 				OffloadSSL:   true,
 			},
@@ -301,13 +302,13 @@ func TestTemplate(t *testing.T) {
 				SharedInfo:   si,
 				FrontendName: "http-with-backend-maxconn",
 				Port:         80,
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "backend-maxconn",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", MaxConnections: 20, Weight: 2},
 										{Name: "second", IP: "10.244.2.2", Port: "2323", Weight: 5},
 									},
@@ -318,16 +319,16 @@ func TestTemplate(t *testing.T) {
 				},
 			},
 		},
-		TCPService: []*TCPService{
+		TCPService: []*hpi.TCPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "stefan",
 				Port:          "333",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name:         "stefan",
 					BackendRules: []string{"first rule", "second rule"},
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324"},
 					},
@@ -341,9 +342,9 @@ func TestTemplate(t *testing.T) {
 				FrontendRules: []string{},
 				CertFile:      "this-is-secret",
 				PEMName:       "secret-pem",
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "daemon",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324"},
 					},
@@ -356,9 +357,9 @@ func TestTemplate(t *testing.T) {
 				Host:          "hello.ok.domain",
 				Port:          "4444",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "katherin",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324"},
 					},
@@ -371,9 +372,9 @@ func TestTemplate(t *testing.T) {
 				Host:          "hello.ok.domain",
 				Port:          "4444",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "kate-becket",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true},
 						{Name: "first", IP: "10.244.2.2", Port: "2324", ExternalName: "ext-name"},
 					},
@@ -386,9 +387,9 @@ func TestTemplate(t *testing.T) {
 				Host:          "hello.ok.domain",
 				Port:          "4445",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "kate-becket",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true, TLSOption: "ssl verify none"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324", ExternalName: "ext-name", TLSOption: "ssl verify required"},
 					},
@@ -399,10 +400,10 @@ func TestTemplate(t *testing.T) {
 				FrontendName: "with-sticky-options",
 				Host:         "hello.ok.domain",
 				Port:         "4449",
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name:   "kate-becket",
 					Sticky: true,
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true, TLSOption: "ssl verify none"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324", ExternalName: "ext-name", TLSOption: "ssl verify required"},
 					},
@@ -413,16 +414,16 @@ func TestTemplate(t *testing.T) {
 				FrontendName:  "with-frontend-rules",
 				Port:          "4445",
 				FrontendRules: []string{"rule one", "rule two"},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "kate-becket",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324"},
 					},
 				},
 			},
 			{
-				SharedInfo:   &SharedInfo{WhitelistSourceRange: "192.168.100.1 192.168.99.100"},
+				SharedInfo:   &hpi.SharedInfo{WhitelistSourceRange: "192.168.100.1 192.168.99.100"},
 				FrontendName: "with-whitelist-tcp",
 				Port:         "4446",
 			},
@@ -439,25 +440,25 @@ func TestTemplate(t *testing.T) {
 }
 
 func TestTemplateAuth(t *testing.T) {
-	si := &SharedInfo{
-		DefaultBackend: &Backend{
+	si := &hpi.SharedInfo{
+		DefaultBackend: &hpi.Backend{
 			Name: "default",
-			Endpoints: []*Endpoint{
+			Endpoints: []*hpi.Endpoint{
 				{Name: "first", IP: "10.244.2.1", Port: "2323"},
 				{Name: "first", IP: "10.244.2.2", Port: "2324"},
 			},
 		},
 	}
-	testParsedConfig := TemplateData{
+	testParsedConfig := hpi.TemplateData{
 		SharedInfo: si,
 		TimeoutDefaults: map[string]string{
 			"client": "2s",
 			"fin":    "1d",
 		},
-		UserLists: []UserList{
+		UserLists: []hpi.UserList{
 			{
 				Name: "auth",
-				Users: []AuthUser{
+				Users: []hpi.AuthUser{
 					{
 						Username:  "foo",
 						Password:  "#bar",
@@ -472,7 +473,7 @@ func TestTemplateAuth(t *testing.T) {
 			},
 			{
 				Name: "auth2",
-				Users: []AuthUser{
+				Users: []hpi.AuthUser{
 					{
 						Username:  "foo",
 						Password:  "#bar",
@@ -486,20 +487,20 @@ func TestTemplateAuth(t *testing.T) {
 				},
 			},
 		},
-		HTTPService: []*HTTPService{
+		HTTPService: []*hpi.HTTPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "one",
 				Port:          80,
 				FrontendRules: []string{},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "elijah",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -507,9 +508,9 @@ func TestTemplateAuth(t *testing.T) {
 							},
 							{
 								Path: "/nicklause",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "nicklause",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324", CheckHealth: true},
 									},
@@ -524,14 +525,14 @@ func TestTemplateAuth(t *testing.T) {
 				FrontendName:  "two",
 				Port:          933,
 				FrontendRules: []string{},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/kool",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "kool",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323", UseDNSResolver: true},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -542,16 +543,16 @@ func TestTemplateAuth(t *testing.T) {
 				},
 			},
 		},
-		TCPService: []*TCPService{
+		TCPService: []*hpi.TCPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "stefan",
 				Port:          "333",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name:         "stefan",
 					BackendRules: []string{"first rule", "second rule"},
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "first", IP: "10.244.2.1", Port: "2323"},
 						{Name: "first", IP: "10.244.2.2", Port: "2324"},
 					},
@@ -570,39 +571,39 @@ func TestTemplateAuth(t *testing.T) {
 }
 
 func TestTemplateServiceAuth(t *testing.T) {
-	si := &SharedInfo{
-		DefaultBackend: &Backend{
+	si := &hpi.SharedInfo{
+		DefaultBackend: &hpi.Backend{
 			Name: "default",
-			Endpoints: []*Endpoint{
+			Endpoints: []*hpi.Endpoint{
 				{Name: "first", IP: "10.244.2.1", Port: "2323"},
 				{Name: "first", IP: "10.244.2.2", Port: "2324"},
 			},
-			BasicAuth: &BasicAuth{
+			BasicAuth: &hpi.BasicAuth{
 				Realm:     "Required",
 				UserLists: []string{"auth"},
 			},
 		},
 	}
-	testParsedConfig := TemplateData{
+	testParsedConfig := hpi.TemplateData{
 		SharedInfo: si,
-		HTTPService: []*HTTPService{
+		HTTPService: []*hpi.HTTPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "one",
 				Port:          80,
 				FrontendRules: []string{},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "elijah",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
-									BasicAuth: &BasicAuth{
+									BasicAuth: &hpi.BasicAuth{
 										Realm:     "Required",
 										UserLists: []string{"auth2"},
 									},
@@ -610,9 +611,9 @@ func TestTemplateServiceAuth(t *testing.T) {
 							},
 							{
 								Path: "/nicklause",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "nicklause",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324", CheckHealth: true},
 									},
@@ -635,11 +636,11 @@ func TestTemplateServiceAuth(t *testing.T) {
 }
 
 func TestDefaultFrontend(t *testing.T) {
-	testParsedConfig := TemplateData{
-		SharedInfo: &SharedInfo{
-			DefaultBackend: &Backend{
+	testParsedConfig := hpi.TemplateData{
+		SharedInfo: &hpi.SharedInfo{
+			DefaultBackend: &hpi.Backend{
 				Name: "default",
-				Endpoints: []*Endpoint{
+				Endpoints: []*hpi.Endpoint{
 					{Name: "first", IP: "10.244.2.1", Port: "2323"},
 					{Name: "second", IP: "10.244.2.2", Port: "2324"},
 				},
@@ -657,17 +658,17 @@ func TestDefaultFrontend(t *testing.T) {
 }
 
 func TestTLSAuth(t *testing.T) {
-	si := &SharedInfo{}
-	testParsedConfig := TemplateData{
+	si := &hpi.SharedInfo{}
+	testParsedConfig := hpi.TemplateData{
 		SharedInfo: si,
-		HTTPService: []*HTTPService{
+		HTTPService: []*hpi.HTTPService{
 			{
 				SharedInfo:    si,
 				OffloadSSL:    true,
 				FrontendName:  "one",
 				Port:          80,
 				FrontendRules: []string{},
-				TLSAuth: &TLSAuth{
+				TLSAuth: &hpi.TLSAuth{
 					VerifyClient: "required",
 					Headers: map[string]string{
 						"X-TEST":      "add",
@@ -675,14 +676,14 @@ func TestTLSAuth(t *testing.T) {
 					},
 					ErrorPage: "google.com",
 				},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "elijah",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -698,17 +699,17 @@ func TestTLSAuth(t *testing.T) {
 				OffloadSSL:    true,
 				Port:          90,
 				FrontendRules: []string{},
-				TLSAuth: &TLSAuth{
+				TLSAuth: &hpi.TLSAuth{
 					ErrorPage: "google.com",
 				},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "elijah",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "first", IP: "10.244.2.1", Port: "2323"},
 										{Name: "first", IP: "10.244.2.2", Port: "2324"},
 									},
@@ -731,10 +732,10 @@ func TestTLSAuth(t *testing.T) {
 }
 
 func TestHealthCheck(t *testing.T) {
-	si := &SharedInfo{
-		DefaultBackend: &Backend{
+	si := &hpi.SharedInfo{
+		DefaultBackend: &hpi.Backend{
 			Name: "default",
-			Endpoints: []*Endpoint{
+			Endpoints: []*hpi.Endpoint{
 				{Name: "aaa", IP: "10.244.2.1", Port: "2323"},
 				{Name: "bbb", IP: "10.244.2.1", Port: "2323", CheckHealth: true},
 				{Name: "ccc", IP: "10.244.2.1", Port: "2323", CheckHealth: true, CheckHealthPort: "5050"},
@@ -742,22 +743,22 @@ func TestHealthCheck(t *testing.T) {
 			},
 		},
 	}
-	testParsedConfig := TemplateData{
+	testParsedConfig := hpi.TemplateData{
 		SharedInfo: si,
-		HTTPService: []*HTTPService{
+		HTTPService: []*hpi.HTTPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "one",
 				Port:          80,
 				FrontendRules: []string{},
-				Hosts: []*HTTPHost{
+				Hosts: []*hpi.HTTPHost{
 					{
-						Paths: []*HTTPPath{
+						Paths: []*hpi.HTTPPath{
 							{
 								Path: "/elijah",
-								Backend: Backend{
+								Backend: &hpi.Backend{
 									Name: "elijah",
-									Endpoints: []*Endpoint{
+									Endpoints: []*hpi.Endpoint{
 										{Name: "aaa", IP: "10.244.2.1", Port: "2323"},
 										{Name: "bbb", IP: "10.244.2.1", Port: "2323", CheckHealth: true},
 										{Name: "ccc", IP: "10.244.2.1", Port: "2323", CheckHealth: true, CheckHealthPort: "5050"},
@@ -770,15 +771,15 @@ func TestHealthCheck(t *testing.T) {
 				},
 			},
 		},
-		TCPService: []*TCPService{
+		TCPService: []*hpi.TCPService{
 			{
 				SharedInfo:    si,
 				FrontendName:  "stefan",
 				Port:          "333",
 				FrontendRules: []string{},
-				Backend: Backend{
+				Backend: &hpi.Backend{
 					Name: "stefan",
-					Endpoints: []*Endpoint{
+					Endpoints: []*hpi.Endpoint{
 						{Name: "aaa", IP: "10.244.2.1", Port: "2323"},
 						{Name: "bbb", IP: "10.244.2.1", Port: "2323", CheckHealth: true},
 						{Name: "ccc", IP: "10.244.2.1", Port: "2323", CheckHealth: true, CheckHealthPort: "5050"},

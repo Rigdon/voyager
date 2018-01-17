@@ -29,7 +29,7 @@ import (
 type Options struct {
 	CloudProvider  string
 	IngressRef     core.ObjectReference
-	MountPath      string
+	CertDir        string
 	CmdFile        string
 	QPS            float32
 	Burst          int
@@ -102,7 +102,7 @@ func (c *Controller) Setup() (err error) {
 	if err != nil {
 		return
 	}
-	c.writer, err = ioutilz.NewAtomicWriter(strings.TrimSuffix(c.options.MountPath, "/"))
+	c.writer, err = ioutilz.NewAtomicWriter(strings.TrimSuffix(c.options.CertDir, "/"))
 	if err != nil {
 		return
 	}
