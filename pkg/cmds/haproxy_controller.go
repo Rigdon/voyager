@@ -7,7 +7,7 @@ import (
 	"github.com/appscode/go/log"
 	"github.com/appscode/kutil/meta"
 	cs "github.com/appscode/voyager/client/typed/voyager/v1beta1"
-	"github.com/appscode/voyager/pkg/tlsmounter"
+	hpc "github.com/appscode/voyager/pkg/haproxy/controller"
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	opts = tlsmounter.Options{
+	opts = hpc.Options{
 		IngressRef: core.ObjectReference{
 			Namespace: meta.Namespace(),
 		},
@@ -32,10 +32,10 @@ var (
 	initOnly bool
 )
 
-func NewCmdTLSMounter() *cobra.Command {
+func NewCmdHAProxyController() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "tls-mounter [command]",
-		Short:             `Mounts TLS certificates in HAProxy pods`,
+		Use:               "haproxy-controller [command]",
+		Short:             `Synchronizes HAProxy config`,
 		DisableAutoGenTag: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			runTLSMounter()
@@ -70,7 +70,7 @@ func runTLSMounter() {
 	k8sClient := kubernetes.NewForConfigOrDie(config)
 	voyagerClient := cs.NewForConfigOrDie(config)
 
-	ctrl := tlsmounter.New(k8sClient, voyagerClient, opts)
+	ctrl := hpc.New(k8sClient, voyagerClient, opts)
 	if err := ctrl.Setup(); err != nil {
 		log.Fatalln(err)
 	}

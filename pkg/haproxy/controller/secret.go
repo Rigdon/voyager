@@ -1,4 +1,4 @@
-package tlsmounter
+package controller
 
 import (
 	"fmt"
@@ -63,7 +63,7 @@ func (c *Controller) initSecretWatcher() {
 				c.sQueue.Add(key)
 			}
 		},
-	}, cache.Indexers{})
+	}, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 }
 
 func (c *Controller) isSecretUsedInIngress(s *core.Secret) bool {

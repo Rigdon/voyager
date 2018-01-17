@@ -1,4 +1,4 @@
-package tlsmounter
+package controller
 
 import (
 	"strings"
@@ -28,19 +28,19 @@ func (c *Controller) initCertificateCRDWatcher() {
 	}
 
 	// create the workqueue
-	c.cQueue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "certificate-crd")
+	c.crtQueue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "certificate-crd")
 
 	// Bind the workqueue to a cache with the help of an informer. This way we make sure that
 	// whenever the cache is updated, the pod key is added to the workqueue.
 	// Note that when we finally process the item from the workqueue, we might see a newer version
 	// of the Secret than the version which was responsible for triggering the update.
-	c.cIndexer, c.cInformer = cache.NewIndexerInformer(lw, &api.Certificate{}, c.options.ResyncPeriod, cache.ResourceEventHandlerFuncs{
+	c.crtIndexer, c.crtInformer = cache.NewIndexerInformer(lw, &api.Certificate{}, c.options.ResyncPeriod, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			if r, ok := obj.(*api.Certificate); ok {
 				if c.isCertificateUsedInIngress(r) {
 					key, err := cache.MetaNamespaceKeyFunc(obj)
 					if err == nil {
-						c.cQueue.Add(key)
+						c.crtQueue.Add(key)
 					}
 				}
 			}
@@ -50,7 +50,7 @@ func (c *Controller) initCertificateCRDWatcher() {
 				if c.isCertificateUsedInIngress(r) {
 					key, err := cache.MetaNamespaceKeyFunc(new)
 					if err == nil {
-						c.cQueue.Add(key)
+						c.crtQueue.Add(key)
 					}
 				}
 			}
@@ -60,10 +60,10 @@ func (c *Controller) initCertificateCRDWatcher() {
 			// key function.
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
-				c.cQueue.Add(key)
+				c.crtQueue.Add(key)
 			}
 		},
-	}, cache.Indexers{})
+	}, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 }
 
 func (c *Controller) isCertificateUsedInIngress(s *api.Certificate) bool {
@@ -89,14 +89,14 @@ func (c *Controller) runCertificateWatcher() {
 
 func (c *Controller) processNextCertificate() bool {
 	// Wait until there is a new item in the working queue
-	key, quit := c.cQueue.Get()
+	key, quit := c.crtQueue.Get()
 	if quit {
 		return false
 	}
 	// Tell the queue that we are done with processing this key. This unblocks the key for other workers
 	// This allows safe parallel processing because two deployments with the same key are never processed in
 	// parallel.
-	defer c.cQueue.Done(key)
+	defer c.crtQueue.Done(key)
 
 	// Invoke the method containing the business logic
 	err := c.syncCertificate(key.(string))
@@ -104,22 +104,22 @@ func (c *Controller) processNextCertificate() bool {
 		// Forget about the #AddRateLimited history of the key on every successful synchronization.
 		// This ensures that future processing of updates for this key is not delayed because of
 		// an outdated error history.
-		c.cQueue.Forget(key)
+		c.crtQueue.Forget(key)
 		return true
 	}
 	log.Errorln("Failed to process Certificate %v. Reason: %s", key, err)
 
 	// This controller retries 5 times if something goes wrong. After that, it stops trying.
-	if c.cQueue.NumRequeues(key) < c.options.MaxNumRequeues {
+	if c.crtQueue.NumRequeues(key) < c.options.MaxNumRequeues {
 		glog.Infof("Error syncing deployment %v: %v", key, err)
 
 		// Re-enqueue the key rate limited. Based on the rate limiter on the
 		// queue and the re-enqueue history, the key will be processed later again.
-		c.cQueue.AddRateLimited(key)
+		c.crtQueue.AddRateLimited(key)
 		return true
 	}
 
-	c.cQueue.Forget(key)
+	c.crtQueue.Forget(key)
 	// Report to an external entity that, even after several retries, we could not successfully process this key
 	runtime.HandleError(err)
 	glog.Infof("Dropping deployment %q out of the queue: %v", key, err)
@@ -143,7 +143,7 @@ func (c *Controller) syncCertificate(key string) error {
 }
 
 func (c *Controller) getCertificate(name string) (*api.Certificate, error) {
-	obj, exists, err := c.cIndexer.GetByKey(c.options.IngressRef.Namespace + "/" + name)
+	obj, exists, err := c.crtIndexer.GetByKey(c.options.IngressRef.Namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

@@ -46,7 +46,7 @@ func NewCmdVoyager(version string) *cobra.Command {
 
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdExport(version))
-	rootCmd.AddCommand(NewCmdTLSMounter())
+	rootCmd.AddCommand(NewCmdHAProxyController())
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdKloader())
 	rootCmd.AddCommand(v.NewCmdVersion())

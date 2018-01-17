@@ -1,4 +1,4 @@
-package tlsmounter
+package controller
 
 import (
 	"fmt"
@@ -88,7 +88,7 @@ func (c *Controller) initIngressWatcher() {
 				}
 			}
 		},
-	}, cache.Indexers{})
+	}, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 }
 
 func (c *Controller) runIngressWatcher() {

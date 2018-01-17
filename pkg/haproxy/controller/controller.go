@@ -1,4 +1,4 @@
-package tlsmounter
+package controller
 
 import (
 	"bytes"
@@ -51,6 +51,10 @@ type Controller struct {
 
 	writer *ioutilz.AtomicWriter
 
+	cmQueue    workqueue.RateLimitingInterface
+	cmIndexer  cache.Indexer
+	cmInformer cache.Controller
+
 	sQueue    workqueue.RateLimitingInterface
 	sIndexer  cache.Indexer
 	sInformer cache.Controller
@@ -63,9 +67,9 @@ type Controller struct {
 	engIndexer  cache.Indexer
 	engInformer cache.Controller
 
-	cQueue    workqueue.RateLimitingInterface
-	cIndexer  cache.Indexer
-	cInformer cache.Controller
+	crtQueue    workqueue.RateLimitingInterface
+	crtIndexer  cache.Indexer
+	crtInformer cache.Controller
 }
 
 func New(client kubernetes.Interface, voyagerClient cs.VoyagerV1beta1Interface, opt Options) *Controller {
@@ -156,7 +160,7 @@ func (c *Controller) initTLSCache(ing *api.Ingress) error {
 			if err != nil {
 				return err
 			}
-			err = c.cIndexer.Add(crd)
+			err = c.crtIndexer.Add(crd)
 			if err != nil {
 				return err
 			}
@@ -233,7 +237,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	} else {
 		defer c.ingQueue.ShutDown()
 	}
-	defer c.cQueue.ShutDown()
+	defer c.crtQueue.ShutDown()
 	glog.Info("Starting tls-mounter")
 
 	go c.sInformer.Run(stopCh)
@@ -242,7 +246,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	} else {
 		go c.ingInformer.Run(stopCh)
 	}
-	go c.cInformer.Run(stopCh)
+	go c.crtInformer.Run(stopCh)
 
 	// Wait for all involved caches to be synced, before processing items from the queue is started
 	if !cache.WaitForCacheSync(stopCh, c.sInformer.HasSynced) {
@@ -260,7 +264,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 			return
 		}
 	}
-	if !cache.WaitForCacheSync(stopCh, c.cInformer.HasSynced) {
+	if !cache.WaitForCacheSync(stopCh, c.crtInformer.HasSynced) {
 		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
 	}
