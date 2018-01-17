@@ -1,5 +1,5 @@
 hash: 2eafa6fa560aa6707e620fcf51999ee6cb1203da0828de23730d655748a36875
-updated: 2018-01-15T12:40:51.350633421+06:00
+updated: 2018-01-17T07:10:11.085941927-08:00
 imports:
 - name: cloud.google.com/go
   version: fe3d41e1ecb2ce36ad3a979037c9b9a2b726226f
@@ -41,7 +41,7 @@ imports:
   - agents/prometheusbuiltin
   - api
 - name: github.com/appscode/kutil
-  version: 1246ec828f2f5024b54a1fe84ad4afaf3de0ed37
+  version: de69f2e242cc9e4df5dcf41d0d314e5fce818154
   subpackages:
   - apiextensions/v1beta1
   - apps/v1beta1
@@ -112,7 +112,7 @@ imports:
   subpackages:
   - pkg/client/monitoring/v1
 - name: github.com/cpuguy83/go-md2man
-  version: 71acacd42f85e5e82f70a55327789582a5200a90
+  version: 8d868be6e9bf9d5350910bab97a050e49887600f
   subpackages:
   - md2man
 - name: github.com/davecgh/go-spew
@@ -141,7 +141,7 @@ imports:
 - name: github.com/facebookgo/stack
   version: 751773369052141c013c6e827a71e8f35c07879c
 - name: github.com/fatih/structs
-  version: f5faa72e73092639913f5833b75e1ac1d6bc7a63
+  version: 253b866009f3c281655a29eb8a31bcd759a0dbdb
 - name: github.com/ghodss/yaml
   version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
 - name: github.com/go-ini/ini
@@ -211,7 +211,7 @@ imports:
 - name: github.com/hashicorp/go-rootcerts
   version: 6bb64b370b90e7ef1fa532be9e591a81c3493e00
 - name: github.com/hashicorp/go-version
-  version: 737a197be8498361d8483d6aa375ab68641a6f7d
+  version: 1b1de86cf2ec13494b6814b48157884efaf71c54
   repo: https://github.com/appscode/go-version.git
   vcs: git
 - name: github.com/hashicorp/golang-lru
@@ -329,7 +329,7 @@ imports:
 - name: github.com/pires/go-proxyproto
   version: 2f38359974ffed92842a86ffcc17001b3f525e34
 - name: github.com/pkg/errors
-  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+  version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/prometheus/client_golang
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
@@ -364,11 +364,11 @@ imports:
 - name: github.com/sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/spf13/afero
-  version: 57afd63c68602b63ed976de00dd066ccb3c319db
+  version: bb8f1927f2a9d3ab41c9340aa034f6b803f4359c
   subpackages:
   - mem
 - name: github.com/spf13/cobra
-  version: b95ab734e27d33e0d8fbabf71ca990568d4e2020
+  version: 0c34d16c3123764e413b9ed982ada58b1c3d53ea
   subpackages:
   - doc
 - name: github.com/spf13/pflag
