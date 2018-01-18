@@ -77,7 +77,7 @@ func New(client kubernetes.Interface, voyagerClient cs.VoyagerV1beta1Interface, 
 		k8sClient:     client,
 		VoyagerClient: voyagerClient,
 		options:       opt,
-		recorder:      eventer.NewEventRecorder(client, "tls-mounter"),
+		recorder:      eventer.NewEventRecorder(client, "haproxy-controller"),
 	}
 }
 
@@ -96,6 +96,7 @@ func (c *Controller) Setup() (err error) {
 	} else {
 		c.initIngressWatcher()
 	}
+	c.initConfigMapWatcher()
 	c.initSecretWatcher()
 	c.initCertificateCRDWatcher()
 	c.store, err = certificate.NewCertStore(c.k8sClient, c.VoyagerClient)
@@ -109,6 +110,10 @@ func (c *Controller) Setup() (err error) {
 
 	var ing *api.Ingress
 	ing, err = c.initIngressIndexer()
+	if err != nil {
+		return
+	}
+	err = c.initConfigCache(ing)
 	if err != nil {
 		return
 	}
@@ -151,6 +156,14 @@ func (c *Controller) initIngressIndexer() (*api.Ingress, error) {
 	}
 	c.ingIndexer.Add(obj)
 	return ingress, nil
+}
+
+func (c *Controller) initConfigCache(ing *api.Ingress) error {
+	cm, err := c.k8sClient.CoreV1().ConfigMaps(c.options.IngressRef.Namespace).Get(api.VoyagerPrefix+c.options.IngressRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	return c.cmIndexer.Add(cm)
 }
 
 func (c *Controller) initTLSCache(ing *api.Ingress) error {
@@ -210,11 +223,11 @@ func certificateToPEMData(crt, key []byte) []byte {
 	return buf.Bytes()
 }
 
-var mountPerformed uint64
+var reloadPerformed uint64
 
-func incMountCounter() {
-	atomic.AddUint64(&mountPerformed, 1)
-	log.Infoln("Mount Performed:", atomic.LoadUint64(&mountPerformed))
+func incReloadCounter() {
+	atomic.AddUint64(&reloadPerformed, 1)
+	log.Infoln("HAProxy reloaded:", atomic.LoadUint64(&reloadPerformed))
 }
 
 func runCmd(path string) error {
@@ -223,7 +236,7 @@ func runCmd(path string) error {
 	if err != nil {
 		return fmt.Errorf("error restarting %v: %v", msg, err)
 	}
-	incMountCounter()
+	incReloadCounter()
 	return nil
 }
 
@@ -238,8 +251,10 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 		defer c.ingQueue.ShutDown()
 	}
 	defer c.crtQueue.ShutDown()
-	glog.Info("Starting tls-mounter")
+	defer c.cmQueue.ShutDown()
+	glog.Info("Starting haproxy-controller")
 
+	go c.cmInformer.Run(stopCh)
 	go c.sInformer.Run(stopCh)
 	if c.options.UsesEngress() {
 		go c.engInformer.Run(stopCh)
@@ -249,6 +264,10 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	go c.crtInformer.Run(stopCh)
 
 	// Wait for all involved caches to be synced, before processing items from the queue is started
+	if !cache.WaitForCacheSync(stopCh, c.cmInformer.HasSynced) {
+		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
+		return
+	}
 	if !cache.WaitForCacheSync(stopCh, c.sInformer.HasSynced) {
 		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
@@ -270,6 +289,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	}
 
 	for i := 0; i < threadiness; i++ {
+		go wait.Until(c.runConfigMapWatcher, time.Second, stopCh)
 		go wait.Until(c.runSecretWatcher, time.Second, stopCh)
 		if c.options.UsesEngress() {
 			go wait.Until(c.runIngressCRDWatcher, time.Second, stopCh)
@@ -280,5 +300,5 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	}
 
 	<-stopCh
-	glog.Info("Stopping tls-mounter")
+	glog.Info("Stopping haproxy-controller")
 }

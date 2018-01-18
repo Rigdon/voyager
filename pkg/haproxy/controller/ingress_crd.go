@@ -201,6 +201,15 @@ func (c *Controller) getIngress() (*api.Ingress, error) {
 }
 
 func (c *Controller) projectIngress(ing *api.Ingress, projections map[string]ioutilz.FileProjection) error {
+	r, err := c.getConfigMap(api.VoyagerPrefix + ing.Name)
+	if err != nil {
+		return err
+	}
+	err = c.projectHAProxyConfig(r, projections)
+	if err != nil {
+		return err
+	}
+
 	for _, tls := range ing.Spec.TLS {
 		if strings.EqualFold(tls.Ref.Kind, api.ResourceKindCertificate) {
 			r, err := c.getCertificate(tls.Ref.Name)

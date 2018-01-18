@@ -2,10 +2,10 @@ package controller
 
 import (
 	"fmt"
-	"strings"
 
 	ioutilz "github.com/appscode/go/ioutil"
 	"github.com/appscode/go/log"
+	api "github.com/appscode/voyager/apis/voyager/v1beta1"
 	"github.com/golang/glog"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -28,7 +28,7 @@ func (c *Controller) initConfigMapWatcher() {
 	}
 
 	// create the workqueue
-	c.cmQueue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "secret")
+	c.cmQueue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "configmap")
 
 	// Bind the workqueue to a cache with the help of an informer. This way we make sure that
 	// whenever the cache is updated, the pod key is added to the workqueue.
@@ -67,43 +67,7 @@ func (c *Controller) initConfigMapWatcher() {
 }
 
 func (c *Controller) isConfigMapUsedInIngress(s *core.ConfigMap) bool {
-	return c.isConfigMapUsedForTLSTermination(s) || c.isConfigMapUsedForTLSAuth(s)
-}
-
-func (c *Controller) isConfigMapUsedForTLSTermination(s *core.ConfigMap) bool {
-	if s.Namespace != c.options.IngressRef.Namespace {
-		return false
-	}
-	r, err := c.getIngress()
-	if err != nil {
-		return false
-	}
-	for _, tls := range r.Spec.TLS {
-		if s.Name == tls.Ref.Name && (strings.EqualFold(tls.Ref.Kind, "ConfigMap") || tls.Ref.Kind == "") {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *Controller) isConfigMapUsedForTLSAuth(s *core.ConfigMap) bool {
-	if s.Namespace != c.options.IngressRef.Namespace {
-		return false
-	}
-	r, err := c.getIngress()
-	if err != nil {
-		return false
-	}
-	for _, fr := range r.Spec.FrontendRules {
-		if fr.Auth != nil {
-			if fr.Auth.TLS != nil && fr.Auth.TLS.ConfigMapName == s.Name {
-				return true
-			}
-		}
-	}
-
-	return false
+	return s.Name == api.VoyagerPrefix+c.options.IngressRef.Name // Ingress.OffshootName()
 }
 
 func (c *Controller) runConfigMapWatcher() {
@@ -118,7 +82,7 @@ func (c *Controller) processNextConfigMap() bool {
 		return false
 	}
 	// Tell the queue that we are done with processing this key. This unblocks the key for other workers
-	// This allows safe parallel processing because two secrets with the same key are never processed in
+	// This allows safe parallel processing because two configmaps with the same key are never processed in
 	// parallel.
 	defer c.cmQueue.Done(key)
 
@@ -135,7 +99,7 @@ func (c *Controller) processNextConfigMap() bool {
 
 	// This controller retries 5 times if something goes wrong. After that, it stops trying.
 	if c.cmQueue.NumRequeues(key) < c.options.MaxNumRequeues {
-		glog.Infof("Error syncing secret %v: %v", key, err)
+		glog.Infof("Error syncing configmap %v: %v", key, err)
 
 		// Re-enqueue the key rate limited. Based on the rate limiter on the
 		// queue and the re-enqueue history, the key will be processed later again.
@@ -146,12 +110,12 @@ func (c *Controller) processNextConfigMap() bool {
 	c.cmQueue.Forget(key)
 	// Report to an external entity that, even after several retries, we could not successfully process this key
 	runtime.HandleError(err)
-	glog.Infof("Dropping secret %q out of the queue: %v", key, err)
+	glog.Infof("Dropping configmap %q out of the queue: %v", key, err)
 	return true
 }
 
 // syncToStdout is the business logic of the controller. In this controller it simply prints
-// information about the secret to stdout. In case an error happened, it has to simply return the error.
+// information about the configmap to stdout. In case an error happened, it has to simply return the error.
 // The retry logic should not be part of the business logic.
 func (c *Controller) syncConfigMap(key string) error {
 	key, err := cache.MetaNamespaceKeyFunc(cache.ExplicitKey(c.options.IngressRef.Namespace + "/" + c.options.IngressRef.Name))
@@ -177,31 +141,11 @@ func (c *Controller) getConfigMap(name string) (*core.ConfigMap, error) {
 	return obj.(*core.ConfigMap), nil
 }
 
-func (c *Controller) projectTLSConfigMap(r *core.ConfigMap, projections map[string]ioutilz.FileProjection) error {
-	pemKey, found := r.Data[core.TLSPrivateKeyKey]
+func (c *Controller) projectHAProxyConfig(r *core.ConfigMap, projections map[string]ioutilz.FileProjection) error {
+	cfg, found := r.Data["haproxy.cfg"]
 	if !found {
-		return fmt.Errorf("secret %s@%s is missing tls.key", r.Name, c.options.IngressRef.Namespace)
+		return fmt.Errorf("configmap %s/%s is missing haproxy.cfg", c.options.IngressRef.Namespace, r.Name)
 	}
-
-	pemCrt, found := r.Data[core.TLSCertKey]
-	if !found {
-		return fmt.Errorf("secret %s@%s is missing tls.crt", r.Name, c.options.IngressRef.Namespace)
-	}
-
-	projections["tls/"+r.Name+".pem"] = ioutilz.FileProjection{Mode: 0755, Data: certificateToPEMData(pemCrt, pemKey)}
-	return nil
-}
-
-func (c *Controller) projectAuthConfigMap(r *core.ConfigMap, projections map[string]ioutilz.FileProjection) error {
-	ca, found := r.Data["ca.crt"]
-	if !found {
-		return fmt.Errorf("secret %s@%s is missing ca.crt", r.Name, c.options.IngressRef.Namespace)
-	}
-	projections["ca/"+r.Name+"-ca.crt"] = ioutilz.FileProjection{Mode: 0755, Data: ca}
-
-	crl, found := r.Data["crl.pem"]
-	if found {
-		projections["ca/"+r.Name+"-crl.pem"] = ioutilz.FileProjection{Mode: 0755, Data: crl}
-	}
+	projections["haproxy.cfg"] = ioutilz.FileProjection{Mode: 0755, Data: []byte(cfg)}
 	return nil
 }
