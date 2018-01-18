@@ -7,7 +7,7 @@ operator:
 ## Docker image containing HAProxy binary
 haproxy:
   image: appscode/haproxy
-  imageTag: 1.7.9-5.0.0-rc.11
+  imageTag: 1.8.3-5.0.0-rc.11
 ## Docker image containing Prometheus exporter
 exporter:
   image: appscode/voyager
