@@ -1,24 +1,24 @@
 ---
-title: Voyager Tls-Mounter
+title: Voyager Haproxy-Controller
 menu:
   product_voyager_5.0.0-rc.11:
-    identifier: voyager-tls-mounter
-    name: Voyager Tls-Mounter
+    identifier: voyager-haproxy-controller
+    name: Voyager Haproxy-Controller
     parent: reference
 product_name: voyager
 menu_name: product_voyager_5.0.0-rc.11
 section_menu_id: reference
 ---
-## voyager tls-mounter
+## voyager haproxy-controller
 
-Mounts TLS certificates in HAProxy pods
+Synchronizes HAProxy config
 
 ### Synopsis
 
-Mounts TLS certificates in HAProxy pods
+Synchronizes HAProxy config
 
 ```
-voyager tls-mounter [command] [flags]
+voyager haproxy-controller [command] [flags]
 ```
 
 ### Options
@@ -27,7 +27,7 @@ voyager tls-mounter [command] [flags]
   -b, --boot-cmd string              Bash script that will be run on every change of the file
       --burst int                    The maximum burst for throttle (default 1000000)
   -c, --cloud-provider string        Name of cloud provider
-  -h, --help                         help for tls-mounter
+  -h, --help                         help for haproxy-controller
       --ingress-api-version string   API version of ingress resource
       --ingress-name string          Name of ingress resource
       --init-only                    If true, exits after initial tls mount

@@ -42,8 +42,7 @@ Voyager by Appscode - Secure Ingress Controller for Kubernetes
 
 * [voyager check](/docs/reference/voyager_check.md)	 - Check Ingress
 * [voyager export](/docs/reference/voyager_export.md)	 - Export Prometheus metrics for HAProxy
-* [voyager kloader](/docs/reference/voyager_kloader.md)	 - Reloads HAProxy when configmap changes
+* [voyager haproxy-controller](/docs/reference/voyager_haproxy-controller.md)	 - Synchronizes HAProxy config
 * [voyager run](/docs/reference/voyager_run.md)	 - Run operator
-* [voyager tls-mounter](/docs/reference/voyager_tls-mounter.md)	 - Mounts TLS certificates in HAProxy pods
 * [voyager version](/docs/reference/voyager_version.md)	 - Prints binary version number.
 
