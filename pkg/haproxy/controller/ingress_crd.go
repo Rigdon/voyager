@@ -200,7 +200,15 @@ func (c *Controller) getIngress() (*api.Ingress, error) {
 	return i, nil
 }
 
-func (c *Controller) projectIngress(ing *api.Ingress, projections map[string]ioutilz.FileProjection) error {
+func (c *Controller) projectConfig(ing *api.Ingress, projections map[string]ioutilz.FileProjection) error {
+	r, err := c.getConfigMap(api.VoyagerPrefix + ing.Name)
+	if err != nil {
+		return err
+	}
+	return c.projectHAProxyConfig(r, projections)
+}
+
+func (c *Controller) projectCerts(ing *api.Ingress, projections map[string]ioutilz.FileProjection) error {
 	r, err := c.getConfigMap(api.VoyagerPrefix + ing.Name)
 	if err != nil {
 		return err
@@ -259,16 +267,33 @@ func (c *Controller) projectIngress(ing *api.Ingress, projections map[string]iou
 }
 
 func (c *Controller) mountIngress(ing *api.Ingress, reload bool) error {
-	projections := map[string]ioutilz.FileProjection{}
-	err := c.projectIngress(ing, projections)
+	cfgProjections := map[string]ioutilz.FileProjection{}
+	err := c.projectConfig(ing, cfgProjections)
 	if err != nil {
 		return err
 	}
-	changed, err := c.writer.Write(projections)
+	cfgChanged, err := c.cfgWriter.Write(cfgProjections)
 	if err != nil {
 		return err
 	}
-	if changed && reload {
+	if cfgChanged {
+		incConfigChangedCounter()
+	}
+
+	certProjections := map[string]ioutilz.FileProjection{}
+	err = c.projectCerts(ing, certProjections)
+	if err != nil {
+		return err
+	}
+	certChanged, err := c.certWriter.Write(certProjections)
+	if err != nil {
+		return err
+	}
+	if certChanged {
+		incCertChangedCounter()
+	}
+
+	if (cfgChanged || certChanged) && reload {
 		return runCmd(c.options.CmdFile)
 	}
 	return nil

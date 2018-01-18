@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	ioutilz "github.com/appscode/go/ioutil"
-	"github.com/appscode/go/log"
 	api "github.com/appscode/voyager/apis/voyager/v1beta1"
 	cs "github.com/appscode/voyager/client/typed/voyager/v1beta1"
 	"github.com/appscode/voyager/pkg/certificate"
@@ -29,6 +27,7 @@ import (
 type Options struct {
 	CloudProvider  string
 	IngressRef     core.ObjectReference
+	ConfigDir      string
 	CertDir        string
 	CmdFile        string
 	QPS            float32
@@ -49,7 +48,8 @@ type Controller struct {
 
 	store *certificate.CertStore
 
-	writer *ioutilz.AtomicWriter
+	cfgWriter  *ioutilz.AtomicWriter
+	certWriter *ioutilz.AtomicWriter
 
 	cmQueue    workqueue.RateLimitingInterface
 	cmIndexer  cache.Indexer
@@ -103,7 +103,11 @@ func (c *Controller) Setup() (err error) {
 	if err != nil {
 		return
 	}
-	c.writer, err = ioutilz.NewAtomicWriter(strings.TrimSuffix(c.options.CertDir, "/"))
+	c.cfgWriter, err = ioutilz.NewAtomicWriter(strings.TrimSuffix(c.options.ConfigDir, "/"))
+	if err != nil {
+		return
+	}
+	c.certWriter, err = ioutilz.NewAtomicWriter(strings.TrimSuffix(c.options.CertDir, "/"))
 	if err != nil {
 		return
 	}
@@ -223,13 +227,6 @@ func certificateToPEMData(crt, key []byte) []byte {
 	return buf.Bytes()
 }
 
-var reloadPerformed uint64
-
-func incReloadCounter() {
-	atomic.AddUint64(&reloadPerformed, 1)
-	log.Infoln("HAProxy reloaded:", atomic.LoadUint64(&reloadPerformed))
-}
-
 func runCmd(path string) error {
 	output, err := exec.Command("sh", "-c", path).CombinedOutput()
 	msg := fmt.Sprintf("%v", string(output))
@@ -244,6 +241,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	defer runtime.HandleCrash()
 
 	// Let the workers stop when we are done
+	defer c.cmQueue.ShutDown()
 	defer c.sQueue.ShutDown()
 	if c.options.UsesEngress() {
 		defer c.engQueue.ShutDown()
@@ -251,7 +249,6 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 		defer c.ingQueue.ShutDown()
 	}
 	defer c.crtQueue.ShutDown()
-	defer c.cmQueue.ShutDown()
 	glog.Info("Starting haproxy-controller")
 
 	go c.cmInformer.Run(stopCh)

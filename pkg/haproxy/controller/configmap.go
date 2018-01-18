@@ -146,6 +146,6 @@ func (c *Controller) projectHAProxyConfig(r *core.ConfigMap, projections map[str
 	if !found {
 		return fmt.Errorf("configmap %s/%s is missing haproxy.cfg", c.options.IngressRef.Namespace, r.Name)
 	}
-	projections["/etc/haproxy/haproxy.cfg"] = ioutilz.FileProjection{Mode: 0755, Data: []byte(cfg)}
+	projections["haproxy.cfg"] = ioutilz.FileProjection{Mode: 0755, Data: []byte(cfg)}
 	return nil
 }
