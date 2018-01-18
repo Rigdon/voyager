@@ -5,7 +5,7 @@ FROM haproxy:1.8.3-alpine
 # change timezone to UTC
 
 RUN set -x \
-  && apk add --update --no-cache ca-certificates su-exec runit socklog tzdata \
+  && apk add --update --no-cache ca-certificates su-exec runit socklog tzdata bash openrc \
   && rm -rf /etc/sv /etc/service \
   && echo 'Etc/UTC' > /etc/timezone
 
@@ -13,9 +13,6 @@ ENV TZ     :/etc/localtime
 ENV LANG   en_US.utf8
 
 COPY voyager /usr/bin/voyager
-
-# COPY haproxy.cfg /etc/haproxy/haproxy.cfg
-RUN touch /var/run/haproxy.pid
 
 # Setup runit scripts
 COPY sv /etc/sv/
