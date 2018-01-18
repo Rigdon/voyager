@@ -51,6 +51,8 @@ var _ = BeforeSuite(func() {
 	err := root.EnsureNamespace()
 	Expect(err).NotTo(HaveOccurred())
 
+	config.LoggerOptions.Verbosity = "5"
+
 	if !root.Config.InCluster {
 		By("Running Controller in Local mode")
 		err := op.Setup()

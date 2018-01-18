@@ -24,8 +24,8 @@ voyager haproxy-controller [command] [flags]
 ### Options
 
 ```
-  -b, --boot-cmd string              Bash script that will be run on every change of the file
       --burst int                    The maximum burst for throttle (default 1000000)
+      --cert-dir string              Path where tls certificates are stored for HAProxy (default "/etc/ssl/private/haproxy")
   -c, --cloud-provider string        Name of cloud provider
   -h, --help                         help for haproxy-controller
       --ingress-api-version string   API version of ingress resource
@@ -33,8 +33,8 @@ voyager haproxy-controller [command] [flags]
       --init-only                    If true, exits after initial tls mount
       --kubeconfig string            Path to kubeconfig file with authorization information (the master location is set by the master flag).
       --master string                The address of the Kubernetes API server (overrides any value in kubeconfig)
-      --mount string                 Path where tls certificates are stored for HAProxy (default "/etc/ssl/private/haproxy")
       --qps float32                  The maximum QPS to the master from this client (default 1e+06)
+  -b, --reload-cmd string            Bash script that will be run to reload HAProxy
       --resync-period duration       If non-zero, will re-list this often. Otherwise, re-list will be delayed aslong as possible (until the upstream source closes the watch or times out. (default 5m0s)
 ```
 
@@ -48,7 +48,7 @@ voyager haproxy-controller [command] [flags]
       --log_backtrace_at traceLocation   when logging hits line file:N, emit a stack trace (default :0)
       --log_dir string                   If non-empty, write log files in this directory
       --logtostderr                      log to standard error instead of files
-      --stderrthreshold severity         logs at or above this threshold go to stderr (default 2)
+      --stderrthreshold severity         logs at or above this threshold go to stderr
   -v, --v Level                          log level for V logs
       --vmodule moduleSpec               comma-separated list of pattern=N settings for file-filtered logging
 ```

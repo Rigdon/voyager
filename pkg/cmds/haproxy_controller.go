@@ -48,8 +48,8 @@ func NewCmdHAProxyController() *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.IngressRef.APIVersion, "ingress-api-version", opts.IngressRef.APIVersion, "API version of ingress resource")
 	cmd.Flags().StringVar(&opts.IngressRef.Name, "ingress-name", opts.IngressRef.Name, "Name of ingress resource")
-	cmd.Flags().StringVar(&opts.CertDir, "mount", opts.CertDir, "Path where tls certificates are stored for HAProxy")
-	cmd.Flags().StringVarP(&opts.CmdFile, "boot-cmd", "b", opts.CmdFile, "Bash script that will be run on every change of the file")
+	cmd.Flags().StringVar(&opts.CertDir, "cert-dir", opts.CertDir, "Path where tls certificates are stored for HAProxy")
+	cmd.Flags().StringVarP(&opts.CmdFile, "reload-cmd", "b", opts.CmdFile, "Bash script that will be run to reload HAProxy")
 	cmd.Flags().DurationVar(&opts.ResyncPeriod, "resync-period", opts.ResyncPeriod, "If non-zero, will re-list this often. Otherwise, re-list will be delayed aslong as possible (until the upstream source closes the watch or times out.")
 	cmd.Flags().StringVarP(&opts.CloudProvider, "cloud-provider", "c", opts.CloudProvider, "Name of cloud provider")
 	cmd.Flags().BoolVar(&initOnly, "init-only", initOnly, "If true, exits after initial tls mount")

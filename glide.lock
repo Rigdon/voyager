@@ -1,5 +1,5 @@
 hash: 2eafa6fa560aa6707e620fcf51999ee6cb1203da0828de23730d655748a36875
-updated: 2018-01-12T09:27:04.980761977-08:00
+updated: 2018-01-18T01:27:00.992331558-08:00
 imports:
 - name: cloud.google.com/go
   version: fe3d41e1ecb2ce36ad3a979037c9b9a2b726226f
@@ -7,14 +7,13 @@ imports:
   - compute/metadata
   - internal
 - name: github.com/appscode/go
-  version: 702364e848d80e8f4d6af7045aef800f36b3db80
+  version: 99dbf420807d9459b63d1d0bf702537bb7aa976f
   subpackages:
   - analytics
   - context
   - crypto/rand
   - errors
   - flags
-  - hold
   - homedir
   - ioutil
   - log
@@ -30,9 +29,6 @@ imports:
   - exporter
 - name: github.com/appscode/kloader
   version: d436ef4d4e892c1fbf8c97f4bf9c267a6978382c
-  subpackages:
-  - cmds
-  - controller
 - name: github.com/appscode/kube-mon
   version: bb1241cf66767ebcca781fef3bdd2c2769e11658
   subpackages:
@@ -41,7 +37,7 @@ imports:
   - agents/prometheusbuiltin
   - api
 - name: github.com/appscode/kutil
-  version: 1246ec828f2f5024b54a1fe84ad4afaf3de0ed37
+  version: de69f2e242cc9e4df5dcf41d0d314e5fce818154
   subpackages:
   - apiextensions/v1beta1
   - core/v1
@@ -140,7 +136,7 @@ imports:
 - name: github.com/facebookgo/stack
   version: 751773369052141c013c6e827a71e8f35c07879c
 - name: github.com/fatih/structs
-  version: f5faa72e73092639913f5833b75e1ac1d6bc7a63
+  version: 253b866009f3c281655a29eb8a31bcd759a0dbdb
 - name: github.com/ghodss/yaml
   version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
 - name: github.com/go-ini/ini
@@ -269,12 +265,6 @@ imports:
   - pbutil
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
-- name: github.com/mikespook/golib
-  version: 38fe6917d34b267a79c3432369e7dcc379e2d5b3
-  subpackages:
-  - autoinc
-  - idgen
-  - signal
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
@@ -328,7 +318,7 @@ imports:
 - name: github.com/pires/go-proxyproto
   version: 2f38359974ffed92842a86ffcc17001b3f525e34
 - name: github.com/pkg/errors
-  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+  version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/prometheus/client_golang
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
@@ -363,11 +353,11 @@ imports:
 - name: github.com/sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/spf13/afero
-  version: 57afd63c68602b63ed976de00dd066ccb3c319db
+  version: bb8f1927f2a9d3ab41c9340aa034f6b803f4359c
   subpackages:
   - mem
 - name: github.com/spf13/cobra
-  version: b95ab734e27d33e0d8fbabf71ca990568d4e2020
+  version: 0c34d16c3123764e413b9ed982ada58b1c3d53ea
   subpackages:
   - doc
 - name: github.com/spf13/pflag
@@ -493,11 +483,6 @@ imports:
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ini.v1
   version: 20b96f641a5ea98f2f8619ff4f3e061cff4833bd
-- name: gopkg.in/mgo.v2
-  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
-  subpackages:
-  - bson
-  - internal/json
 - name: gopkg.in/square/go-jose.v1
   version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
   subpackages:
