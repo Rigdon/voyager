@@ -14,12 +14,13 @@ import (
 )
 
 func RenderConfig(data TemplateData) (string, error) {
-	if err := data.isValid(); err != nil {
-		return "", err
-	}
 	data.convertWildcardHostToEmpty()
 	data.canonicalize()
 	data.moveAcmePathToTop()
+
+	if err := data.isValid(); err != nil {
+		return "", err
+	}
 
 	var buf bytes.Buffer
 	err := haproxyTemplate.ExecuteTemplate(&buf, "haproxy.cfg", data)
