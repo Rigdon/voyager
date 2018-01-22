@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/errors"
 	api "github.com/appscode/voyager/apis/voyager/v1beta1"
 	"github.com/appscode/voyager/pkg/haproxy"
@@ -207,14 +206,12 @@ func getFrontendName(proto, addr string, port int) string {
 }
 
 func getBackendName(r *api.Ingress, be api.IngressBackend) string {
-	var seed string
 	parts := strings.Split(be.ServiceName, ".")
 	if len(parts) == 1 {
-		seed = fmt.Sprintf("%s.%s:%d", parts[0], r.Namespace, be.ServicePort.IntValue())
+		return fmt.Sprintf("%s.%s:%d", parts[0], r.Namespace, be.ServicePort.IntValue())
 	} else {
-		seed = fmt.Sprintf("%s.%s:%d", parts[0], parts[1], be.ServicePort.IntValue()) // drop DNS labels following svcName, i.e.,  parts[2:]
+		return fmt.Sprintf("%s.%s:%d", parts[0], parts[1], be.ServicePort.IntValue()) // drop DNS labels following svcName, i.e.,  parts[2:]
 	}
-	return rand.WithUniqSuffix(seed)
 }
 
 // ref: https://github.com/jcmoraisjr/haproxy-ingress/pull/57

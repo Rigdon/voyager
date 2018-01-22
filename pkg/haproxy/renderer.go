@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/appscode/go/log"
@@ -55,7 +56,7 @@ func (td *TemplateData) convertWildcardHostToEmpty() {
 
 func (td *TemplateData) canonicalize() {
 	if td.DefaultBackend != nil {
-		td.DefaultBackend.canonicalize()
+		td.DefaultBackend.canonicalize("", "", "")
 	}
 	for x := range td.HTTPService {
 		svc := td.HTTPService[x]
@@ -80,7 +81,7 @@ func (td *TemplateData) canonicalize() {
 			host := svc.Hosts[y]
 			for z := range host.Paths {
 				if host.Paths[z].Backend != nil {
-					host.Paths[z].Backend.canonicalize()
+					host.Paths[z].Backend.canonicalize(host.Host, strconv.Itoa(svc.Port), host.Paths[z].Path)
 				}
 			}
 
@@ -102,6 +103,11 @@ func (td *TemplateData) canonicalize() {
 
 		td.HTTPService[x] = svc
 	}
+
+	for _, svc := range td.TCPService {
+		svc.Backend.canonicalize(svc.Host, svc.Port, "")
+	}
+
 	sort.Slice(td.HTTPService, func(i, j int) bool { return td.HTTPService[i].sortKey() < td.HTTPService[j].sortKey() })
 	sort.Slice(td.TCPService, func(i, j int) bool { return td.TCPService[i].sortKey() < td.TCPService[j].sortKey() })
 	sort.Slice(td.DNSResolvers, func(i, j int) bool { return td.DNSResolvers[i].Name < td.DNSResolvers[j].Name })

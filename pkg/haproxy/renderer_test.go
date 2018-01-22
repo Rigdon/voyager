@@ -58,7 +58,7 @@ func TestPathOrdering(t *testing.T) {
 	for y := range hosts {
 		host := hosts[y]
 		for z := range host.Paths {
-			host.Paths[z].Backend.canonicalize()
+			host.Paths[z].Backend.canonicalize(host.Host, "80", host.Paths[z].Path)
 		}
 
 		sort.Slice(host.Paths, func(i, j int) bool {

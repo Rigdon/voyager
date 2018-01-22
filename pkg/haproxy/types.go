@@ -1,6 +1,8 @@
 package haproxy
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"sort"
 
@@ -132,7 +134,9 @@ type Backend struct {
 	StickyCookieHash string
 }
 
-func (be *Backend) canonicalize() {
+func (be *Backend) canonicalize(host, port, path string) {
+	hashed := md5.Sum([]byte(host + "-" + port + "-" + path))
+	be.Name = be.Name + "-" + hex.EncodeToString(hashed[:]) // unique backend name
 	sort.Slice(be.Endpoints, func(i, j int) bool { return be.Endpoints[i].IP < be.Endpoints[j].IP })
 	if be.BasicAuth != nil {
 		be.BasicAuth.canonicalize()
