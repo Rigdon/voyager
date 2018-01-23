@@ -56,8 +56,9 @@ func (td *TemplateData) convertWildcardHostToEmpty() {
 }
 
 func (td *TemplateData) canonicalize() {
+	backends := td.countBackendNames()
 	if td.DefaultBackend != nil {
-		td.DefaultBackend.canonicalize("", "", "")
+		td.DefaultBackend.canonicalize(backends[td.DefaultBackend.Name] > 1, "", "", "")
 	}
 	for x := range td.HTTPService {
 		svc := td.HTTPService[x]
@@ -82,7 +83,12 @@ func (td *TemplateData) canonicalize() {
 			host := svc.Hosts[y]
 			for z := range host.Paths {
 				if host.Paths[z].Backend != nil {
-					host.Paths[z].Backend.canonicalize(host.Host, strconv.Itoa(svc.Port), host.Paths[z].Path)
+					host.Paths[z].Backend.canonicalize(
+						backends[host.Paths[z].Backend.Name] > 1,
+						host.Host,
+						strconv.Itoa(svc.Port),
+						host.Paths[z].Path,
+					)
 				}
 			}
 
@@ -106,7 +112,7 @@ func (td *TemplateData) canonicalize() {
 	}
 
 	for _, svc := range td.TCPService {
-		svc.Backend.canonicalize(svc.Host, svc.Port, "")
+		svc.Backend.canonicalize(backends[svc.Backend.Name] > 1, svc.Host, svc.Port, "")
 	}
 
 	sort.Slice(td.HTTPService, func(i, j int) bool { return td.HTTPService[i].sortKey() < td.HTTPService[j].sortKey() })
@@ -117,6 +123,28 @@ func (td *TemplateData) canonicalize() {
 		td.UserLists[i].canonicalize()
 	}
 	sort.Slice(td.UserLists, func(i, j int) bool { return td.UserLists[i].Name < td.UserLists[j].Name })
+}
+
+func (td *TemplateData) countBackendNames() map[string]int {
+	backends := make(map[string]int)
+	if td.DefaultBackend != nil {
+		backends[td.DefaultBackend.Name]++
+	}
+	for _, svc := range td.HTTPService {
+		for _, host := range svc.Hosts {
+			for _, path := range host.Paths {
+				if path.Backend != nil {
+					backends[path.Backend.Name]++
+				}
+			}
+		}
+	}
+	for _, svc := range td.TCPService {
+		if svc.Backend != nil {
+			backends[svc.Backend.Name]++
+		}
+	}
+	return backends
 }
 
 func (td *TemplateData) moveAcmePathToTop() {

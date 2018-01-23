@@ -333,7 +333,6 @@ func (c *controller) generateConfig() error {
 			return err
 		}
 		si.DefaultBackend = &haproxy.Backend{
-			Name:             "default-backend", // TODO: Use constant
 			BasicAuth:        bk.BasicAuth,
 			Endpoints:        bk.Endpoints,
 			BackendRules:     c.Ingress.Spec.Backend.BackendRule,
@@ -342,6 +341,12 @@ func (c *controller) generateConfig() error {
 			Sticky:           bk.Sticky,
 			StickyCookieName: bk.StickyCookieName,
 			StickyCookieHash: bk.StickyCookieHash,
+		}
+		if c.Ingress.Spec.Backend.Name != "" {
+			si.DefaultBackend.Name = c.Ingress.Spec.Backend.Name
+		} else {
+			si.DefaultBackend.Name = "default-backend" // TODO: Use constant
+			si.DefaultBackend.NameGenerated = true
 		}
 		if globalBasic != nil {
 			si.DefaultBackend.BasicAuth = globalBasic
@@ -432,10 +437,9 @@ func (c *controller) generateConfig() error {
 					return err
 				}
 				if len(bk.Endpoints) > 0 {
-					httpPaths = append(httpPaths, &haproxy.HTTPPath{
+					httpPath := &haproxy.HTTPPath{
 						Path: path.Path,
 						Backend: &haproxy.Backend{
-							Name:             getBackendName(c.Ingress, path.Backend.IngressBackend),
 							BasicAuth:        bk.BasicAuth,
 							Endpoints:        bk.Endpoints,
 							BackendRules:     path.Backend.BackendRule,
@@ -445,7 +449,14 @@ func (c *controller) generateConfig() error {
 							StickyCookieName: bk.StickyCookieName,
 							StickyCookieHash: bk.StickyCookieHash,
 						},
-					})
+					}
+					if path.Backend.IngressBackend.Name != "" {
+						httpPath.Backend.Name = path.Backend.IngressBackend.Name
+					} else {
+						httpPath.Backend.Name = getBackendName(c.Ingress, path.Backend.IngressBackend)
+						httpPath.Backend.NameGenerated = true
+					}
+					httpPaths = append(httpPaths, httpPath)
 				}
 			}
 			info.Hosts[rule.Host] = httpPaths
@@ -465,7 +476,6 @@ func (c *controller) generateConfig() error {
 					ALPNOptions:   parseALPNOptions(rule.TCP.ALPN),
 					FrontendRules: fr.Rules,
 					Backend: &haproxy.Backend{
-						Name:             getBackendName(c.Ingress, rule.TCP.Backend),
 						BackendRules:     rule.TCP.Backend.BackendRule,
 						Endpoints:        bk.Endpoints,
 						Sticky:           bk.Sticky,
@@ -473,6 +483,13 @@ func (c *controller) generateConfig() error {
 						StickyCookieHash: bk.StickyCookieHash,
 					},
 				}
+				if rule.TCP.Backend.Name != "" {
+					srv.Backend.Name = rule.TCP.Backend.Name
+				} else {
+					srv.Backend.Name = getBackendName(c.Ingress, rule.TCP.Backend)
+					srv.Backend.NameGenerated = true
+				}
+
 				if globalTLS != nil {
 					srv.TLSAuth = globalTLS
 				} else if fr.Auth != nil && fr.Auth.TLS != nil {
